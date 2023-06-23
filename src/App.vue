@@ -1,26 +1,41 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div v-if="data">
+    <DataTable/>
+
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import {onBeforeUnmount, onMounted, provide, ref} from 'vue'
+import DataTable from "@/components/DataTable";
+import './styles/global.css';
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
+  components: {DataTable},
+  setup() {
+    const data = ref();
+    const pollInterval = ref();
+    provide('data', data);
+    const fetchData = async () => {
+      data.value = await (await fetch(`http://${process.env.VUE_APP_CONNECTION_HOST}/water/health`)).json();
+    }
+
+    onMounted(async () => {
+      await fetchData();
+      pollInterval.value = setInterval(fetchData, process.env.VUE_APP_REFRESH_RATE * 1000);
+    })
+
+    onBeforeUnmount(() => {
+      clearInterval(pollInterval.value);
+    })
+
+    return {
+      data,
+    }
   }
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+<style scoped>
 </style>
