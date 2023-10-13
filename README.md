@@ -1,24 +1,3 @@
-# hydroponic-client
+# Hydroponic Monitoring Dashboard
 
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+This is a cyberpunk themed dashboard for monitoring my personal hydroponic system at my home. The data shown is fetched from an ESP8266 microcontroller that is connected to a  temperature sensor, a PH sensor, and a TDS sensor. The frontend polls the ESP8266 every 10 seconds for new data and updates the dashboard accordingly.

@@ -100,7 +100,7 @@ export default {
       if (!progress.value)
         return;
 
-      let numberOfBars = Math.floor(progress.value.clientWidth / 20);
+      let numberOfBars = Math.floor(progress.value.clientWidth / 15);
       let percent;
       const cautionPercentage = 80 * 0.01;
       const dangerPercentage = 90 * 0.01;
