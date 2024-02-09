@@ -1,201 +1,240 @@
 <template>
-  <div v-if="field === 'temperature'">
-    <div class="danger-span">
-      <div class="point left-point">
-        <div class="min">17&#8451;</div>
-        <div class="tick"></div>
-      </div>
-
-      <span class="danger-text">danger</span>
-      <div class="point caution-10-point mr-5">
-        <div class="min">24&#8451;</div>
-        <div class="tick"></div>
-      </div>
+  <div class="container">
+    <div class="glitch animated-1">
+      <canvas height="100%" id="hydroponic-ph-data"></canvas>
     </div>
-    <div class="point danger-point">
-      <div class="min">25&#8451;</div>
-      <div class="tick"></div>
+    <div class="glitch animated-1">
+      <canvas height="100%" id="hydroponic-tds-data"></canvas>
     </div>
-    <span class="danger-text">danger</span>
-    <div class="point danger-10-point">
-      <div class="min">26&#8451;</div>
-      <div class="tick"></div>
-
+    <div class="glitch animated-1">
+      <canvas height="100%" id="hydroponic-temperature-data"></canvas>
     </div>
   </div>
-  <div v-if="field === 'ph'">
-    <div class="point left-point mr-60">
-      <div class="min">1.0</div>
-      <div class="tick"></div>
-    </div>
-    <div class="point caution-point">
-      <div class="min">+6.5</div>
-      <div class="tick"></div>
-    </div>
-
-    <span class="danger-text">caution</span>
-    <div class="point caution-10-point mr-5">
-      <div class="min">+7.0</div>
-      <div class="tick"></div>
-    </div>
-    <div class="point danger-point">
-      <div class="min">+7.0</div>
-      <div class="tick"></div>
-    </div>
-    <span class="danger-text">danger</span>
-    <div class="point danger-10-point">
-      <div class="min">+10.0</div>
-      <div class="tick"></div>
-
-    </div>
-  </div>
-  <div v-if="field === 'tdsValue'">
-    <div class="point left-point mr-60">
-      <div class="min">0</div>
-      <div class="tick"></div>
-    </div>
-    <div class="point caution-point">
-      <div class="min">+0</div>
-      <div class="tick"></div>
-    </div>
-
-    <span class="danger-text">caution</span>
-    <div class="point caution-10-point mr-5">
-      <div class="min">+10.0</div>
-      <div class="tick"></div>
-    </div>
-    <div class="point danger-point">
-      <div class="min">+16.0</div>
-      <div class="tick"></div>
-    </div>
-    <span class="danger-text">danger</span>
-    <div class="point danger-10-point">
-      <div class="min">+20.0</div>
-      <div class="tick"></div>
-
-    </div>
-  </div>
-  <div class="progress" ref="progress">
-    <div v-for="result in numberedArray" :key="result.idx" :class="{bar: true, 'filled': result.filled}">
-
-    </div>
-
-  </div>
+  <svg height="0">
+    <filter id="filter">
+      <feColorMatrix type="matrix" result="red_" values="4 0 0 0 0
+              0 0 0 0 0
+              0 0 0 0 0
+              0 0 0 1 0" />
+      <feOffset in="red_" dx="1" dy="0" result="red" />
+      <feColorMatrix type="matrix" in="SourceGraphic" result="blue_" values="0 0 0 0 0
+              0 3 0 0 0
+              0 0 10 0 0
+              0 0 0 1 0" />
+      <feOffset in="blue_" dx="-1" dy="0" result="blue" />
+      <feBlend mode="screen" in="red" in2="blue" />
+    </filter>
+  </svg>
+  <svg height="0">
+    <filter id="filter2">
+      <feColorMatrix type="matrix" result="red_" values="4 0 0 0 0
+              0 0 0 0 0
+              0 0 0 0 0
+              0 0 0 1 0" />
+      <feOffset in="red_" dx="-.5" dy="-.5" result="red" />
+      <feColorMatrix type="matrix" in="SourceGraphic" result="blue_" values="0 0 0 0 0
+              0 3 0 0 0
+              0 0 10 0 0
+              0 0 0 1 0" />
+      <feOffset in="blue_" dx=".5" dy=".5" result="blue" />
+      <feBlend mode="screen" in="red" in2="blue" />
+    </filter>
+  </svg>
 </template>
 
-<script>
-import {computed, ref, toRef} from "vue";
+<script setup>
+import { onBeforeMount, onMounted, ref } from "vue";
 
-export default {
-  name: "ThresholdBar",
-  props: ["field", "value"],
-  setup(props) {
-    const field = toRef(props, 'field');
-    const value = toRef(props, 'value');
-    const progress = ref();
-    const bar = ref();
-    const numberedArray = computed(() => {
-      let cautionMin = 0, cautionMax = 0;
-      let dangerMin = 0, dangerMax = 0;
-      if (!progress.value)
-        return;
+import Chart from 'chart.js/auto';
 
-      let numberOfBars = Math.floor(progress.value.clientWidth / 15);
-      let percent;
-      const cautionPercentage = 80 * 0.01;
-      const dangerPercentage = 90 * 0.01;
+const waterData = ref([]);
+onBeforeMount(async () => {
+  waterData.value = await fetchData();
+});
 
-      switch (field.value) {
-        case "temperature":
-          percent = (value.value - process.env.VUE_APP_TEMP_LOWER_LIMIT) / process.env.VUE_APP_TEMP_UPPER_LIMIT;
-          dangerMin = process.env.VUE_APP_TEMP_LOWER_LIMIT;
-          dangerMax = process.env.VUE_APP_TEMP_UPPER_LIMIT;
-          cautionMin =process.env.VUE_APP_TEMP_LOWER_LIMIT * Math.pow(cautionPercentage, -1);
-          cautionMax =process.env.VUE_APP_TEMP_UPPER_LIMIT * cautionPercentage;
-          break;
-        case "ph":
-          percent = 6.00 /14;
-          break;
-        case "tdsValue":
-          percent = (value.value - process.env.VUE_APP_TDS_LOWER_LIMIT) / process.env.VUE_APP_TDS_UPPER_LIMIT;
-          break;
-        default:
-          percent = 0;
-          break;
+onMounted(() => {
+  const phChart = new Chart(
+    document.getElementById('hydroponic-ph-data').getContext('2d'),
+    {
+      type: 'line',
+      data: {
+        labels: [waterData.value.timestamp],
+        datasets: [
+          {
+            label: 'PH',
+            data: Array(waterData.value.ph),
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
       }
-      console.log(dangerPercentage, dangerMin, dangerMax, cautionMax, cautionMin)
-      let filledBars = percent * numberOfBars;
-
-      return Array(numberOfBars).fill(0, 0, numberOfBars).map((_, idx) => {
-        return {filled: idx <= filledBars, idx}
-      });
-    });
-
-    return {
-      numberedArray,
-      progress,
-      bar
     }
-  }
+  );
+
+  const tdsChart = new Chart(
+    document.getElementById('hydroponic-tds-data').getContext('2d'),
+    {
+      type: 'line',
+      data: {
+        labels: [waterData.value.timestamp],
+        datasets: [
+          {
+            label: 'TDS',
+            data: Array(waterData.value.tds),
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    }
+  );
+
+  const temperatureChart = new Chart(
+    document.getElementById('hydroponic-temperature-data').getContext('2d'),
+    {
+      type: 'line',
+      data: {
+        labels: [waterData.value.timestamp],
+        datasets: [
+          {
+            label: 'Temperature',
+            data: Array(waterData.value.temperature),
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    }
+  );
+
+  const interval = setInterval(async () => {
+    const newData = await fetchData();
+    phChart.data.datasets[0].data = Array(...phChart.data.datasets[0].data.concat(newData.ph));
+    phChart.data.labels = Array(...phChart.data.labels.concat(newData.timestamp));
+    phChart.update();
+
+    tdsChart.data.datasets[0].data = Array(...tdsChart.data.datasets[0].data.concat(newData.tds));
+    tdsChart.data.labels = Array(...tdsChart.data.labels.concat(newData.timestamp));
+    tdsChart.update();
+
+    temperatureChart.data.datasets[0].data = Array(...temperatureChart.data.datasets[0].data.concat(newData.temperature));
+    temperatureChart.data.labels = Array(...temperatureChart.data.labels.concat(newData.timestamp));
+    temperatureChart.update();
+
+  }, 1000);
+  return () => clearInterval(interval);
+});
+
+async function fetchData() {
+
+  return {
+    ph: Math.random() * 14,
+    tds: Math.random() * 2000,
+    temperature: Math.random() * 40,
+    timestamp: new Date().toLocaleTimeString()
+  };
 }
+
 </script>
 
 <style scoped>
-.progress {
-  height: 100px;
-  width: 100%;
-  display: flex;
-  gap: 5px;
+.glitch {
+  filter: url("#filter");
 }
 
-.bar {
-  width: 15px;
-  border-radius: 10px;
-  height: 100px;
-  background-color: gray;
+@keyframes noise-anim-1 {
+  0% {
+    filter: url("#filter2");
+  }
+
+  15% {
+    filter: url("#filter");
+  }
+
+  34% {
+    filter: url("#filter2");
+  }
+
+  43% {
+    filter: url("#filter2");
+  }
+
+  52% {
+    filter: url("#filter");
+  }
+
+  71% {
+    filter: url("#filter2");
+  }
+
+
 }
 
-.tick {
-  background-color: orange;
-  height: 15px;
-  width: 4px;
+/* glitch animation with thinner bars */
+
+
+
+@keyframes noise-anim-2 {
+  0% {
+    clip-path: inset(40% 0 61% 0);
+  }
+
+  20% {
+    clip-path: inset(92% 0 90% 0);
+  }
+
+  40% {
+    clip-path: inset(43% 0 20% 0);
+  }
+
+  60% {
+    clip-path: inset(25% 0 58% 0);
+  }
+
+  80% {
+    clip-path: inset(54% 0 7% 0);
+  }
+
+  100% {
+    clip-path: inset(0% 0 80% 0);
+  }
 }
 
-.danger-text {
-  text-transform: uppercase;
-  font-weight: bold;
-  color: orange;
-  padding: 0 15px;
-  text-align: center;
-  vertical-align: bottom;
+.animated-1 {
+  animation: noise-anim-1 .35s infinite linear alternate-reverse;
 }
 
-.min {
-  color: orange;
+.animated-2 {
+  animation: noise-anim-2 .35s infinite linear alternate-reverse;
 }
 
-.filled {
-  background-color: blue;
-}
-
-.left-point {
-}
-
-.point {
-  display: inline-block;
-  max-width: 4px;
-}
-
-.mr-5 {
-  margin-right: 100px;
-}
-
-.mr-60 {
-  margin-right: 40%;
-}
-
-.danger-span {
-  display: inline;
-  margin: 0 15px;
+.container {
+  display: grid;
+  grid-template-columns: repeat(2, 50vw);
+  grid-template-rows: repeat(2, 50vh);
 }
 </style>

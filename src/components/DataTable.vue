@@ -112,52 +112,5 @@ table, th, td {
   position: relative;
 }
 
-@keyframes noise-anim-1 {
-  0% {
-    clip-path: inset(80% 0 45% 0);
-  }
-  20% {
-    clip-path: inset(40% 0 70% 0);
-  }
-  40% {
-    clip-path: inset(70% 0 20% 0);
-  }
-  60% {
-    clip-path: inset(80% 0 58% 0);
-  }
-  80% {
-    clip-path: inset(0% 0 95% 0);
-  }
-  100% {
-    clip-path: inset(90% 0 10% 0);
-  }
-}
 
-@keyframes noise-anim-2 {
-  0% {
-    clip-path: inset(40% 0 61% 0);
-  }
-  20% {
-    clip-path: inset(92% 0 1% 0);
-  }
-  40% {
-    clip-path: inset(43% 0 1% 0);
-  }
-  60% {
-    clip-path: inset(25% 0 58% 0);
-  }
-  80% {
-    clip-path: inset(54% 0 7% 0);
-  }
-  100% {
-    clip-path: inset(0% 0 80% 0);
-  }
-}
-
-.animated-1 {
-  animation: noise-anim-1 .35s infinite linear alternate-reverse;
-}
-.animated-2 {
-  animation: noise-anim-2 .35s infinite linear alternate-reverse;
-}
 </style>
